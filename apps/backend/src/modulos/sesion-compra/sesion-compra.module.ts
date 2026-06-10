@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
+import { CatalogoModule } from '../catalogo/catalogo.module';
+import { SesionCompraController } from './sesion-compra.controller';
+import { SesionCompraServicio } from './sesion-compra.servicio';
 
 /**
  * Módulo de sesión de compra: el corazón del flujo scan & go.
- * Sprint 1: iniciar/cerrar sesión, registrar eventos de escaneo con
- * SNAPSHOT DE PRECIO (regla de negocio: se cobra el precio del momento
- * del escaneo, no el de góndola al pagar), total acumulado.
+ * Cada escaneo guarda un SNAPSHOT del precio (regla de negocio: se
+ * cobra el precio del momento del escaneo, no el de góndola al pagar).
  */
-@Module({})
+@Module({
+  imports: [CatalogoModule],
+  controllers: [SesionCompraController],
+  providers: [SesionCompraServicio],
+  exports: [SesionCompraServicio],
+})
 export class SesionCompraModule {}

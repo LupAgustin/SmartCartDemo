@@ -83,7 +83,7 @@ model Usuario {
   tenantId       String     @map("tenant_id")
   email          String
   nombre         String
-  /// Hash bcrypt de la contraseña. // TODO: integración real (auth Sprint 1)
+  /// Hash bcrypt de la contraseña.
   hashContrasena String     @map("hash_contrasena")
   rol            RolUsuario @default(CLIENTE)
   creadoEn       DateTime   @default(now()) @map("creado_en")
@@ -184,6 +184,42 @@ model TransaccionDePago {
 
   @@index([tenantId, estado])
   @@map("transacciones_de_pago")
+}
+
+/// Alerta interna: alguien escaneó un EAN que no está en el catálogo.
+/// Regla de negocio: el flujo del cliente no se rompe; esto queda para
+/// que el admin revise la sincronización del catálogo.
+model AlertaCatalogo {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  ean       String
+  /// Cuántas veces se escaneó este EAN desconocido (se acumula).
+  contador  Int      @default(1)
+  resuelta  Boolean  @default(false)
+  creadaEn  DateTime @default(now()) @map("creada_en")
+  actualizadaEn DateTime @updatedAt @map("actualizada_en")
+
+  @@unique([tenantId, ean])
+  @@index([tenantId, resuelta])
+  @@map("alertas_catalogo")
+}
+
+/// Auditoría de cada corrida de sincronización de catálogo
+/// (alimenta la métrica "tiempo de sincronización" del panel).
+model RegistroSincronizacion {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  fuente          String
+  altas           Int
+  bajas           Int
+  cambiosDePrecio Int      @map("cambios_de_precio")
+  sinCambios      Int      @map("sin_cambios")
+  errores         String[]
+  duracionMs      Int      @map("duracion_ms")
+  corridaEn       DateTime @default(now()) @map("corrida_en")
+
+  @@index([tenantId, corridaEn])
+  @@map("registros_sincronizacion")
 }
 
 /// Registro de la validación humana del carro físico al egreso.

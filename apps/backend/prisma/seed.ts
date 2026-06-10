@@ -8,6 +8,7 @@
  */
 import 'dotenv/config';
 import { PrismaClient, RolUsuario } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -67,8 +68,9 @@ async function sembrar() {
   console.log(`Sucursal: ${sucursal.nombre}`);
 
   // --- Usuarios de prueba ---
-  // TODO: integración real (Sprint 1) — hash bcrypt real al implementar auth.
-  const hashPendiente = 'PENDIENTE_AUTH_SPRINT_1';
+  // Contraseña demo compartida (solo seed de desarrollo, documentada en el README).
+  const contrasenaDemo = 'SmartCart2026!';
+  const hashDemo = await bcrypt.hash(contrasenaDemo, 10);
   const usuarios: Array<{ email: string; nombre: string; rol: RolUsuario }> = [
     { email: 'cliente@demo.com.ar', nombre: 'Clara Cliente', rol: RolUsuario.CLIENTE },
     { email: 'operador@superdemo.com.ar', nombre: 'Oscar Operador', rol: RolUsuario.OPERADOR_EGRESO },
@@ -77,8 +79,8 @@ async function sembrar() {
   for (const u of usuarios) {
     await prisma.usuario.upsert({
       where: { tenantId_email: { tenantId: tenant.id, email: u.email } },
-      update: { rol: u.rol },
-      create: { ...u, tenantId: tenant.id, hashContrasena: hashPendiente },
+      update: { rol: u.rol, hashContrasena: hashDemo },
+      create: { ...u, tenantId: tenant.id, hashContrasena: hashDemo },
     });
   }
   console.log(`Usuarios: ${usuarios.length} (cliente, operador, admin)`);

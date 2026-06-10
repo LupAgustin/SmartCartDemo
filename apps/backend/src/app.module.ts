@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { SaludModule } from './salud/salud.module';
 import { AuthModule } from './modulos/auth/auth.module';
@@ -18,6 +19,8 @@ import { SERVICIO_ANALYTICS, ServicioAnalyticsNoOp } from './observabilidad/anal
  */
 @Module({
   imports: [
+    // Habilita los jobs @Cron (sincronización diaria del catálogo).
+    ScheduleModule.forRoot(),
     PrismaModule,
     SaludModule,
     AuthModule,

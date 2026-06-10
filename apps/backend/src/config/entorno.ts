@@ -12,6 +12,12 @@ const esquemaEntorno = z.object({
   // Opcionales: si están vacíos, las integraciones quedan deshabilitadas en dev.
   SENTRY_DSN: z.string().optional().or(z.literal('')),
   MERCADOPAGO_ACCESS_TOKEN: z.string().optional().or(z.literal('')),
+  /**
+   * Carpeta/archivo de donde el adaptador CSV lee el catálogo.
+   * En el piloto real esto apunta al drop-zone del SFTP del súper.
+   * // TODO: integración real (SFTP)
+   */
+  CATALOGO_CSV_RUTA: z.string().default('../../infra/seed/catalogo-demo.csv'),
 });
 
 export type Entorno = z.infer<typeof esquemaEntorno>;

@@ -70,7 +70,7 @@ npm run dev:movil
 
 - **Tenant:** Súper Demo (`super-demo`)
 - **Sucursal:** Cerro de las Rosas, Av. Rafael Núñez 4850, Córdoba (geofence 50m)
-- **Usuarios:** `cliente@demo.com.ar`, `operador@superdemo.com.ar`, `admin@superdemo.com.ar` (contraseñas se definen con auth en Sprint 1)
+- **Usuarios:** `cliente@demo.com.ar`, `operador@superdemo.com.ar`, `admin@superdemo.com.ar` — contraseña demo de los tres: `SmartCart2026!` (solo seed de desarrollo)
 - **Catálogo:** 50 productos típicos argentinos con EAN-13 estructuralmente válidos (prefijo 779). Regenerar con `node infra/seed/generar-catalogo.cjs`.
 
 ## Ambientes
@@ -80,4 +80,4 @@ npm run dev:movil
 
 ## Estado del proyecto
 
-Sprint 0 (cimientos) ✔ — siguiente: Sprint 1 (auth, catálogo + importador CSV, sesión de compra con snapshot de precio).
+Sprint 0 (cimientos) ✔ · Sprint 1 (auth JWT, catálogo + importador CSV, sesión de compra con snapshot de precio) ✔ — siguiente: Sprint 2 (app móvil: login, sucursales, escáner, carrito).
