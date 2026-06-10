@@ -1,0 +1,30 @@
+{
+  "name": "smartcart",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SmartCart — MVP scan & go para supermercados (B2B multi-tenant)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:backend": "npm run dev --workspace=@smartcart/backend",
+    "dev:panel": "npm run dev --workspace=@smartcart/panel",
+    "dev:movil": "npm run dev --workspace=@smartcart/movil",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:setup": "npm run db:migrar --workspace=@smartcart/backend && npm run db:seed --workspace=@smartcart/backend",
+    "db:migrar": "npm run db:migrar --workspace=@smartcart/backend",
+    "db:seed": "npm run db:seed --workspace=@smartcart/backend"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@11.6.0"
+}

@@ -1,0 +1,205 @@
+// Esquema de datos de SmartCart.
+// Regla de oro multi-tenant: toda entidad de negocio lleva tenant_id
+// y ninguna query debe ejecutarse sin filtrar por él (ver comun/tenant).
+// Montos siempre en centavos de ARS (enteros) para evitar punto flotante.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  CLIENTE
+  OPERADOR_EGRESO
+  ADMIN_TENANT
+  ADMIN_PLATAFORMA
+}
+
+enum EstadoSesion {
+  ACTIVA
+  PENDIENTE_PAGO
+  PAGADA
+  VALIDADA
+  CANCELADA
+}
+
+enum EstadoPago {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  REEMBOLSADO
+}
+
+enum ResultadoValidacion {
+  APROBADA
+  CON_DIFERENCIAS
+  RECHAZADA
+}
+
+/// Cadena de supermercados cliente (cada una es un tenant aislado).
+model Tenant {
+  id        String   @id @default(uuid())
+  nombre    String
+  slug      String   @unique
+  activo    Boolean  @default(true)
+  creadoEn  DateTime @default(now()) @map("creado_en")
+
+  sucursales    Sucursal[]
+  usuarios      Usuario[]
+  productos     ProductoCatalogo[]
+  sesiones      SesionDeCompra[]
+  transacciones TransaccionDePago[]
+  validaciones  ValidacionDeEgreso[]
+
+  @@map("tenants")
+}
+
+/// Sucursal física de un tenant. El geofence usa lat/long + radio.
+model Sucursal {
+  id                  String  @id @default(uuid())
+  tenantId            String  @map("tenant_id")
+  nombre              String
+  direccion           String
+  latitud             Float
+  longitud            Float
+  /// Radio del geofence en metros (regla de negocio: 50m por defecto).
+  radioGeofenceMetros Int     @default(50) @map("radio_geofence_metros")
+  activa              Boolean @default(true)
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  sesiones SesionDeCompra[]
+
+  @@index([tenantId])
+  @@map("sucursales")
+}
+
+/// Usuario final, operador de egreso o admin. El email es único por tenant.
+model Usuario {
+  id             String     @id @default(uuid())
+  tenantId       String     @map("tenant_id")
+  email          String
+  nombre         String
+  /// Hash bcrypt de la contraseña. // TODO: integración real (auth Sprint 1)
+  hashContrasena String     @map("hash_contrasena")
+  rol            RolUsuario @default(CLIENTE)
+  creadoEn       DateTime   @default(now()) @map("creado_en")
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  sesiones     SesionDeCompra[]
+  validaciones ValidacionDeEgreso[]
+
+  @@unique([tenantId, email])
+  @@map("usuarios")
+}
+
+/// Cache local del catálogo del súper, sincronizado por el adaptador
+/// de fuente (CSV/SFTP en el MVP). El EAN es único por tenant.
+model ProductoCatalogo {
+  id                   String   @id @default(uuid())
+  tenantId             String   @map("tenant_id")
+  ean                  String
+  nombre               String
+  marca                String?
+  /// Precio vigente en centavos de ARS.
+  precioActualCentavos Int      @map("precio_actual_centavos")
+  /// false = baja lógica (el importador nunca borra físicamente).
+  activo               Boolean  @default(true)
+  creadoEn             DateTime @default(now()) @map("creado_en")
+  actualizadoEn        DateTime @updatedAt @map("actualizado_en")
+
+  tenant  Tenant            @relation(fields: [tenantId], references: [id])
+  eventos EventoDeEscaneo[]
+
+  @@unique([tenantId, ean])
+  @@index([tenantId, activo])
+  @@map("productos_catalogo")
+}
+
+/// Una recorrida de compra de un usuario en una sucursal.
+model SesionDeCompra {
+  id           String       @id @default(uuid())
+  tenantId     String       @map("tenant_id")
+  sucursalId   String       @map("sucursal_id")
+  usuarioId    String       @map("usuario_id")
+  estado       EstadoSesion @default(ACTIVA)
+  iniciadaEn   DateTime     @default(now()) @map("iniciada_en")
+  finalizadaEn DateTime?    @map("finalizada_en")
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  sucursal     Sucursal            @relation(fields: [sucursalId], references: [id])
+  usuario      Usuario             @relation(fields: [usuarioId], references: [id])
+  eventos      EventoDeEscaneo[]
+  transaccion  TransaccionDePago?
+  validacion   ValidacionDeEgreso?
+
+  @@index([tenantId, estado])
+  @@index([tenantId, usuarioId])
+  @@map("sesiones_de_compra")
+}
+
+/// Cada escaneo de producto dentro de una sesión.
+/// REGLA DE NEGOCIO CENTRAL: snapshot_precio_centavos es el precio que
+/// se cobra, aunque el catálogo cambie entre el escaneo y el pago.
+model EventoDeEscaneo {
+  id                     String   @id @default(uuid())
+  tenantId               String   @map("tenant_id")
+  sesionId               String   @map("sesion_id")
+  productoId             String   @map("producto_id")
+  ean                    String
+  /// Denormalizado a propósito: el ticket muestra lo que vio el cliente.
+  nombreProducto         String   @map("nombre_producto")
+  snapshotPrecioCentavos Int      @map("snapshot_precio_centavos")
+  cantidad               Int      @default(1)
+  escaneadoEn            DateTime @default(now()) @map("escaneado_en")
+
+  sesion   SesionDeCompra   @relation(fields: [sesionId], references: [id])
+  producto ProductoCatalogo @relation(fields: [productoId], references: [id])
+
+  @@index([tenantId, sesionId])
+  @@map("eventos_de_escaneo")
+}
+
+/// Intento/resultado de pago de una sesión, detrás de PaymentProvider.
+model TransaccionDePago {
+  id                 String     @id @default(uuid())
+  tenantId           String     @map("tenant_id")
+  sesionId           String     @unique @map("sesion_id")
+  /// Identificador del proveedor (ej: "mercadopago"). No hardcodear lógica por proveedor.
+  proveedor          String
+  estado             EstadoPago @default(PENDIENTE)
+  montoCentavos      Int        @map("monto_centavos")
+  /// ID de la operación en el proveedor externo.
+  referenciaExterna  String?    @map("referencia_externa")
+  /// Último payload crudo recibido del webhook, para auditoría.
+  payloadWebhook     Json?      @map("payload_webhook")
+  creadaEn           DateTime   @default(now()) @map("creada_en")
+  actualizadaEn      DateTime   @updatedAt @map("actualizada_en")
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id])
+  sesion SesionDeCompra @relation(fields: [sesionId], references: [id])
+
+  @@index([tenantId, estado])
+  @@map("transacciones_de_pago")
+}
+
+/// Registro de la validación humana del carro físico al egreso.
+model ValidacionDeEgreso {
+  id            String              @id @default(uuid())
+  tenantId      String              @map("tenant_id")
+  sesionId      String              @unique @map("sesion_id")
+  operadorId    String              @map("operador_id")
+  resultado     ResultadoValidacion
+  observaciones String?
+  validadaEn    DateTime            @default(now()) @map("validada_en")
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id])
+  sesion   SesionDeCompra @relation(fields: [sesionId], references: [id])
+  operador Usuario        @relation(fields: [operadorId], references: [id])
+
+  @@index([tenantId])
+  @@map("validaciones_de_egreso")
+}

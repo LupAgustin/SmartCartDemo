@@ -1,0 +1,16 @@
+{
+  "name": "@smartcart/compartido",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos y contratos compartidos entre backend, app móvil y panel",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"sin tests en compartido (solo tipos)\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

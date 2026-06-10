@@ -1,0 +1,22 @@
+# Infraestructura local de desarrollo de SmartCart.
+# Uso: docker compose -f infra/docker-compose.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartcart-postgres
+    environment:
+      POSTGRES_USER: smartcart
+      POSTGRES_PASSWORD: smartcart_dev
+      POSTGRES_DB: smartcart_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - smartcart_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartcart -d smartcart_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  smartcart_pgdata:

@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+build/
+.expo/
+.turbo/
+
+# Variables de entorno (nunca commitear secretos)
+.env
+.env.*
+!.env.example
+
+# Prisma
+apps/backend/prisma/*.db
+
+# Logs y temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

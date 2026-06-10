@@ -1,0 +1,27 @@
+{
+  "name": "@smartcart/movil",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "private": true,
+  "description": "App móvil SmartCart — scan & go (Expo / React Native)",
+  "dependencies": {
+    "@smartcart/compartido": "*",
+    "expo": "~56.0.9",
+    "expo-status-bar": "~56.0.4",
+    "react": "19.2.3",
+    "react-native": "0.85.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "dev": "expo start",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"sin tests de movil en Sprint 0\" && exit 0"
+  }
+}

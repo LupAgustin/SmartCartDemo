@@ -1,0 +1,37 @@
+# CI de SmartCart: lint + typecheck + tests + build en cada push/PR.
+# El deploy continuo se agrega cuando haya hosting definido (ver DECISIONS.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npm run db:generar --workspace=@smartcart/backend
+        env:
+          # Prisma generate no se conecta a la base, pero valida que la URL exista.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
