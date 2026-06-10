@@ -126,6 +126,10 @@ model SesionDeCompra {
   sucursalId   String       @map("sucursal_id")
   usuarioId    String       @map("usuario_id")
   estado       EstadoSesion @default(ACTIVA)
+  /// Token del QR de egreso. Nace con el pago aprobado y es de UN SOLO
+  /// USO: la validación del operador pasa la sesión a VALIDADA y un
+  /// segundo intento con el mismo código se rechaza.
+  codigoEgreso String?      @unique @map("codigo_egreso")
   iniciadaEn   DateTime     @default(now()) @map("iniciada_en")
   finalizadaEn DateTime?    @map("finalizada_en")
 

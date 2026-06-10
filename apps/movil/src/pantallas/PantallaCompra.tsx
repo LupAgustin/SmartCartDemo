@@ -11,14 +11,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { EventoDeEscaneoDTO, ProductoCatalogoDTO } from '@smartcart/compartido';
-import { api, ErrorApi, SesionConCarrito } from '../api/cliente';
+import { EstadoPago, EventoDeEscaneoDTO, ProductoCatalogoDTO } from '@smartcart/compartido';
+import { api, ErrorApi, ResultadoPago, SesionConCarrito } from '../api/cliente';
 import { colores, espaciado } from '../tema';
 import { formatearCentavos } from '../utilidades/moneda';
 
 interface Props {
   sesionInicial: SesionConCarrito;
   alTerminar: () => void;
+  alPagar: (resultado: ResultadoPago) => void;
 }
 
 /** Pausa entre lecturas del escáner para no registrar el mismo código en ráfaga. */
@@ -29,7 +30,7 @@ const PAUSA_ESCANEO_MS = 1800;
  * total en tiempo real abajo. El precio de cada ítem es el SNAPSHOT
  * del momento del escaneo (lo garantiza el backend).
  */
-export function PantallaCompra({ sesionInicial, alTerminar }: Props) {
+export function PantallaCompra({ sesionInicial, alTerminar, alPagar }: Props) {
   const [sesion, setSesion] = useState<SesionConCarrito>(sesionInicial);
   const [permisoCamara, pedirPermisoCamara] = useCameraPermissions();
   const [aviso, setAviso] = useState<string | null>(null);
@@ -103,6 +104,27 @@ export function PantallaCompra({ sesionInicial, alTerminar }: Props) {
       setSesion(actualizada);
     } catch (e) {
       mostrarAviso(e instanceof Error ? e.message : 'No se pudo actualizar');
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  const pagar = async () => {
+    setOcupado(true);
+    try {
+      const resultado = await api.pagar(sesion.id);
+      if (resultado.estadoPago === EstadoPago.APROBADO) {
+        alPagar(resultado);
+      } else {
+        mostrarAviso('El pago fue rechazado. Podés reintentar.');
+      }
+    } catch (e) {
+      if (e instanceof ErrorApi && e.status === 0) {
+        // Decisión de negocio: el pago exige conexión, no se encola offline.
+        mostrarAviso('Necesitás conexión para pagar. Reintentá con señal.');
+      } else {
+        mostrarAviso(e instanceof Error ? e.message : 'Error al pagar');
+      }
     } finally {
       setOcupado(false);
     }
@@ -222,8 +244,22 @@ export function PantallaCompra({ sesionInicial, alTerminar }: Props) {
         <Text style={estilos.totalEtiqueta}>Total</Text>
         <Text style={estilos.totalMonto}>{formatearCentavos(sesion.totalCentavos)}</Text>
       </View>
-      <TouchableOpacity style={estilos.botonPagar} disabled>
-        <Text style={estilos.botonPagarTexto}>Pagar (llega en el Sprint 3)</Text>
+      <TouchableOpacity
+        style={[
+          estilos.botonPagar,
+          sesion.eventos.length > 0 && !ocupado && estilos.botonPagarActivo,
+        ]}
+        onPress={pagar}
+        disabled={sesion.eventos.length === 0 || ocupado}
+      >
+        <Text
+          style={[
+            estilos.botonPagarTexto,
+            sesion.eventos.length > 0 && !ocupado && estilos.botonPagarTextoActivo,
+          ]}
+        >
+          {ocupado ? 'Procesando…' : 'Pagar'}
+        </Text>
       </TouchableOpacity>
 
       {/* Modal de búsqueda manual */}
@@ -445,10 +481,16 @@ const estilos = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
+  botonPagarActivo: {
+    backgroundColor: colores.primario,
+  },
   botonPagarTexto: {
     color: colores.textoSuave,
     fontWeight: '700',
     fontSize: 15,
+  },
+  botonPagarTextoActivo: {
+    color: '#fff',
   },
   modalFondo: {
     flex: 1,

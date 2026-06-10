@@ -68,6 +68,21 @@ Cada decisión nueva se agrega acá con fecha, contexto y alternativas descartad
 **Por qué:** pedido del negocio — demo funcional sin cargar credenciales sandbox de MP. La arquitectura ya exigía no hardcodear el proveedor, así que el costo es bajo y el flujo completo (pagar → QR → validación de egreso) se puede demostrar igual.
 **Marcado en código:** `// TODO: integración real` donde corresponda (Sprint 3).
 
+## 2026-06-10 — QR de egreso de un solo uso por máquina de estados
+
+**Decisión:** el QR de egreso es un token aleatorio (`codigo_egreso`, único) que nace cuando el pago se aprueba. El "un solo uso" no se implementa borrando el token sino con la transición atómica de estados `PAGADA → VALIDADA` (`updateMany` con guarda de estado): el primer operador que valida gana; cualquier intento posterior (o concurrente) recibe 409 "QR ya utilizado". Con tests unitarios de la carrera.
+**Por qué:** atómico a nivel de base (sin locks explícitos), auditable (la sesión conserva el código y el registro de validación) y simple de razonar.
+
+## 2026-06-10 — Resultado controlado del pago simulado
+
+**Decisión:** `ProveedorDePagoSimulado` aprueba todo pago salvo los montos cuyos centavos terminan en 99 (ej: $1.234,99), que rechaza. Permite demostrar el camino de pago fallido sin tocar código ni configurar nada.
+**Nota:** la confirmación es inmediata (sin webhook); cuando se enchufe Mercado Pago sandbox, la confirmación se muda al webhook real detrás de la misma interfaz.
+
+## 2026-06-10 — Vista del operador en la app móvil
+
+**Decisión:** la validación de egreso del Sprint 3 vive en la misma app Expo: si el usuario logueado tiene rol `OPERADOR_EGRESO`, la app muestra el flujo de operador (escanear QR del cliente → ver carrito declarado → aprobar/con diferencias/rechazar). El panel web B2B tendrá su propia vista en Sprint 4.
+**Por qué:** el operador necesita una cámara para escanear el QR y el escáner ya existe en la app; la demo completa corre con dos teléfonos (o teléfono + emulador) sin desarrollar el panel todavía.
+
 ## 2026-06-10 — Seed con EAN-13 estructuralmente válidos
 
 **Decisión:** el catálogo demo (50 productos) usa EAN-13 con prefijo 779 (GS1 Argentina) y dígito verificador calculado (`infra/seed/generar-catalogo.cjs`), para que el escáner real los acepte en pruebas físicas (se pueden renderizar como código de barras y escanear).

@@ -79,12 +79,23 @@ const productos = [
   ['Jabón de Tocador x3 125g', 'Lux', 3300],
 ];
 
+// Productos con su EAN REAL (leído del envase), para poder escanear
+// el paquete físico en las demos. [ean, nombre, marca, precioPesos]
+const productosConEanReal = [
+  ['7790040143234', 'Galletitas Chocolinas 250g', 'Bagley', 2000],
+];
+
 const filas = [['ean', 'nombre', 'marca', 'precio_centavos', 'activo']];
 productos.forEach(([nombre, marca, precioPesos], i) => {
   filas.push([eanArgentino(i + 1), nombre, marca, String(precioPesos * 100), 'true']);
+});
+productosConEanReal.forEach(([ean, nombre, marca, precioPesos]) => {
+  filas.push([ean, nombre, marca, String(precioPesos * 100), 'true']);
 });
 
 const csv = filas.map((f) => f.join(',')).join('\n') + '\n';
 const destino = path.join(__dirname, 'catalogo-demo.csv');
 fs.writeFileSync(destino, csv, 'utf8');
-console.log(`Catálogo demo generado: ${destino} (${productos.length} productos)`);
+console.log(
+  `Catálogo demo generado: ${destino} (${productos.length + productosConEanReal.length} productos)`,
+);

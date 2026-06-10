@@ -80,4 +80,11 @@ npm run dev:movil
 
 ## Estado del proyecto
 
-Sprint 0 (cimientos) ✔ · Sprint 1 (auth JWT, catálogo + importador CSV, sesión de compra con snapshot de precio) ✔ · Sprint 2 (app móvil: login, sucursales con geofence, escáner EAN, carrito con total en vivo y persistencia local) ✔ — siguiente: Sprint 3 (pago simulado + QR de egreso + vista del operador).
+Sprint 0 (cimientos) ✔ · Sprint 1 (auth JWT, catálogo + importador CSV, sesión de compra con snapshot de precio) ✔ · Sprint 2 (app móvil: login, sucursales con geofence, escáner EAN, carrito con total en vivo y persistencia local) ✔ · Sprint 3 (pago simulado detrás de `ProveedorDePago`, QR de egreso de un solo uso, vista del operador en la app) ✔ — siguiente: Sprint 4 (panel B2B: catálogo, alertas, métricas y configuración).
+
+### Flujo demo completo (dos roles)
+
+1. **Cliente** (`cliente@demo.com.ar`): elige sucursal → escanea productos → Pagar → aparece el QR de egreso.
+2. **Operador** (`operador@superdemo.com.ar`, otro teléfono o emulador): escanea el QR del cliente → ve el carrito declarado → Aprobar.
+3. La pantalla del cliente pasa sola a "Compra validada". Un segundo escaneo del mismo QR da "ya fue utilizado".
+4. Para demostrar un pago rechazado: armá un carrito cuyo total termine en 99 centavos.

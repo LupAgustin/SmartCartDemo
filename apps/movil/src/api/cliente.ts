@@ -1,5 +1,8 @@
 import {
+  EstadoPago,
+  EstadoSesion,
   ProductoCatalogoDTO,
+  ResultadoValidacion,
   SesionDeCompraDTO,
   SucursalDTO,
   UsuarioDTO,
@@ -66,6 +69,22 @@ export interface RespuestaAuth {
 /** La sesión como la devuelve el backend: DTO + sucursal resumida. */
 export type SesionConCarrito = SesionDeCompraDTO & {
   sucursal: { id: string; nombre: string };
+  /** Token del QR de egreso (existe solo después de un pago aprobado). */
+  codigoEgreso: string | null;
+};
+
+export interface ResultadoPago {
+  sesionId: string;
+  estadoPago: EstadoPago;
+  estadoSesion: EstadoSesion;
+  totalCentavos: number;
+  codigoEgreso: string | null;
+}
+
+/** Vista del operador: la sesión detrás de un código de egreso. */
+export type VistaEgreso = SesionConCarrito & {
+  usuario: { id: string; nombre: string; email: string };
+  validacion: { resultado: ResultadoValidacion; validadaEn: string } | null;
 };
 
 export const api = {
@@ -99,4 +118,21 @@ export const api = {
 
   buscarProductos: (texto: string) =>
     pedir<ProductoCatalogoDTO[]>(`/catalogo/productos?buscar=${encodeURIComponent(texto)}`),
+
+  // --- Pago y egreso (Sprint 3) ---
+
+  /** Paga la sesión. EXIGE conexión: si no hay red, el ErrorApi llega con status 0. */
+  pagar: (sesionId: string) =>
+    pedir<ResultadoPago>(`/pagos/sesiones/${sesionId}`, { metodo: 'POST' }),
+
+  /** (Operador) Carrito declarado detrás del QR escaneado. */
+  buscarEgreso: (codigo: string) =>
+    pedir<VistaEgreso>(`/validacion-egreso/${encodeURIComponent(codigo)}`),
+
+  /** (Operador) Registra el cotejo humano y consume el QR. */
+  validarEgreso: (codigo: string, resultado: ResultadoValidacion, observaciones?: string) =>
+    pedir<{ sesionId: string; estado: EstadoSesion }>(
+      `/validacion-egreso/${encodeURIComponent(codigo)}`,
+      { metodo: 'POST', cuerpo: { resultado, observaciones } },
+    ),
 };
