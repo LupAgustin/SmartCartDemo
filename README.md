@@ -80,4 +80,4 @@ npm run dev:movil
 
 ## Estado del proyecto
 
-Sprint 0 (cimientos) ✔ · Sprint 1 (auth JWT, catálogo + importador CSV, sesión de compra con snapshot de precio) ✔ — siguiente: Sprint 2 (app móvil: login, sucursales, escáner, carrito).
+Sprint 0 (cimientos) ✔ · Sprint 1 (auth JWT, catálogo + importador CSV, sesión de compra con snapshot de precio) ✔ · Sprint 2 (app móvil: login, sucursales con geofence, escáner EAN, carrito con total en vivo y persistencia local) ✔ — siguiente: Sprint 3 (pago simulado + QR de egreso + vista del operador).

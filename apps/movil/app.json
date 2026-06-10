@@ -27,6 +27,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SmartCart usa la cámara para escanear los códigos de barras de los productos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SmartCart usa tu ubicación para detectar la sucursal donde estás comprando."
+        }
+      ]
+    ]
   }
 }
