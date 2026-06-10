@@ -54,6 +54,19 @@ Cada decisión nueva se agrega acá con fecha, contexto y alternativas descartad
 **Por qué:** el modo estricto (default de Turbo 2) filtra variables de entorno que npm/cmd necesitan en Windows (ej. `APPDATA`), haciendo que cualquier script falle con exit 1 sin output. Verificado empíricamente en esta máquina (Windows 11, npm 11).
 **Costo asumido:** el cache de Turbo es algo menos hermético respecto de variables de entorno; aceptable para el MVP.
 
+## 2026-06-10 — Expo SDK 55 (no 56) por compatibilidad con Expo Go
+
+**Decisión:** fijar la app móvil en Expo SDK 55 (`expo@~55.0.26`, react 19.2.0, react-native 0.83.6, todas las versiones alineadas con `expo install --fix` / `expo-doctor`).
+**Por qué:** el SDK 56 salió hace días y el cliente Expo Go publicado en Play Store todavía corresponde al SDK 55; Expo Go solo soporta una versión de SDK por release, así que un proyecto SDK 56 aparece como "incompatible" en el teléfono. Verificado en el dispositivo del equipo.
+**Cuándo revisar:** al armar el development build con EAS (Sprint 2/3) o cuando Play Store actualice Expo Go, se puede subir a SDK 56 con `npx expo install expo@latest && npx expo install --fix`.
+**Nota monorepo:** React del panel se fija en la misma versión exacta que móvil (19.2.0) para evitar duplicados de React en `node_modules` (expo-doctor lo marca como riesgo).
+
+## 2026-06-10 — Demo sin credenciales de Mercado Pago: proveedor de pago simulado
+
+**Decisión:** la demo del MVP usa un `ProveedorDePagoSimulado` que implementa la interfaz `ProveedorDePago` (aprueba/rechaza pagos de forma controlada, sin red externa). Mercado Pago sandbox queda como segunda implementación detrás de la misma interfaz, para enchufar cuando haya credenciales.
+**Por qué:** pedido del negocio — demo funcional sin cargar credenciales sandbox de MP. La arquitectura ya exigía no hardcodear el proveedor, así que el costo es bajo y el flujo completo (pagar → QR → validación de egreso) se puede demostrar igual.
+**Marcado en código:** `// TODO: integración real` donde corresponda (Sprint 3).
+
 ## 2026-06-10 — Seed con EAN-13 estructuralmente válidos
 
 **Decisión:** el catálogo demo (50 productos) usa EAN-13 con prefijo 779 (GS1 Argentina) y dígito verificador calculado (`infra/seed/generar-catalogo.cjs`), para que el escáner real los acepte en pruebas físicas (se pueden renderizar como código de barras y escanear).
