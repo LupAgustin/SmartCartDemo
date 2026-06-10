@@ -54,13 +54,13 @@ Cada decisión nueva se agrega acá con fecha, contexto y alternativas descartad
 **Por qué:** el modo estricto (default de Turbo 2) filtra variables de entorno que npm/cmd necesitan en Windows (ej. `APPDATA`), haciendo que cualquier script falle con exit 1 sin output. Verificado empíricamente en esta máquina (Windows 11, npm 11).
 **Costo asumido:** el cache de Turbo es algo menos hermético respecto de variables de entorno; aceptable para el MVP.
 
-## 2026-06-10 — Expo SDK 56, alineado con el Expo Go vigente (revierte el intento de SDK 55)
+## 2026-06-10 — Expo SDK 54: igualar al Expo Go REAL del dispositivo, no al anunciado
 
-**Decisión:** la app móvil queda en Expo SDK 56 (`expo@~56.0.9`, react 19.2.3, react-native 0.85.3), la misma versión que soporta el Expo Go actual de las tiendas.
-**Historia:** el primer error de "proyecto incompatible" se debió a un Expo Go viejo en el dispositivo; se bajó el proyecto a SDK 55, pero al reinstalar Expo Go desde Play Store llegó el cliente SDK 56 (verificado en expo.dev/go) y el error se invirtió ("requiere una versión más nueva de Expo Go"). Expo Go solo soporta UNA versión de SDK por release: el proyecto debe seguir al cliente publicado.
-**Regla operativa:** ante "proyecto incompatible con Expo Go", verificar qué SDK soporta el Expo Go publicado (expo.dev/go) y alinear el proyecto a ese SDK con `npm pkg set` + `npm install` (no usar `expo install --fix` desde el subdirectorio: falla en monorepos npm), validando con `npx expo-doctor`.
-**Nota monorepo:** React del panel se fija en la misma versión exacta que móvil (19.2.3) para evitar duplicados de React en `node_modules` (expo-doctor lo marca como riesgo).
-**Alternativa futura:** un development build con `expo-dev-client` (como usa protulaAPP, otro proyecto del equipo) desacopla la app de la versión de Expo Go; lo evaluamos en Sprint 2/3 si Expo Go vuelve a molestar.
+**Decisión:** la app móvil queda en Expo SDK 54 (`expo@~54.0.33`, react 19.1.0, react-native 0.81.5, typescript ~5.9.2), la misma configuración exacta de protulaAPP, otro proyecto Expo que corre verificado en el teléfono del equipo.
+**Historia completa (3 intentos):** el template generó SDK 56 → "incompatible" en el teléfono. Se probó SDK 55 → mismo error "requiere una versión MÁS NUEVA de Expo Go", lo que prueba que el cliente instalado es < 55. Como el Expo Go del teléfono está recién instalado de Play Store y protulaAPP (SDK 54) sí funciona, el cliente real es SDK 54, aunque expo.dev/go anuncie SDK 56 (Play Store va atrasado respecto del sitio).
+**Lección / regla operativa:** la fuente de verdad es el dispositivo, no la web: el SDK soportado se ve en la pantalla de inicio de Expo Go. Alinear el proyecto a ESE SDK con `npm pkg set` + `npm install` desde la raíz (no usar `expo install --fix` en el subdirectorio: falla en monorepos npm) y validar con `npx expo-doctor`. Si los residuos del lockfile dejan duplicados de react/react-native, borrar `package-lock.json` + `node_modules` y reinstalar.
+**Nota monorepo:** React del panel se fija en la misma versión exacta que móvil (19.1.0) para evitar duplicados de React en `node_modules`.
+**Alternativa futura:** un development build con `expo-dev-client` (como protulaAPP) desacopla la app de la versión de Expo Go; lo evaluamos en Sprint 2/3.
 
 ## 2026-06-10 — Demo sin credenciales de Mercado Pago: proveedor de pago simulado
 
